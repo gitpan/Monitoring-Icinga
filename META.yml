@@ -22,4 +22,4 @@ requires:
   HTTP::Request::Common: 0
   JSON::XS: 0
   LWP::UserAgent: 0
-version: 0.01
+version: 0.02

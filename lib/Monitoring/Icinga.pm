@@ -13,11 +13,11 @@ Simple example:
   );
   
   $api->set_columns('HOST_NAME', 'HOST_OUTPUT', 'HOST_CURRENT_STATE');
-  my $hosts = $api->get_hosts_not_ok;
+  my $hosts = $api->get_hosts(1,2);
 
-This will query the API on localhost. $hosts is an array reference containing
-the information for every host, that is not OK (host state > 0). You can walk
-through it using:
+This will query the Icinga Web REST API on localhost. $hosts is an array
+reference containing the information for every host object, which is currently
+is DOWN (1) or UNREACHABLE (2).
 
 =head1 DESCRIPTION
 
@@ -38,7 +38,7 @@ use HTTP::Request::Common qw(POST);
 use LWP::UserAgent;
 use JSON::XS;
 
-our $VERSION = '0.01';
+our $VERSION = '0.02';
 
 
 =over
@@ -143,8 +143,8 @@ sub set_target {
     }
 
     $self->{'target'} = [];
-    push $self->{'target'}, 'target';
-    push $self->{'target'}, $target;
+    push @{$self->{'target'}}, 'target';
+    push @{$self->{'target'}}, $target;
 }
 
 
@@ -156,6 +156,7 @@ For a list of valid columns, see the source code of Icinga Web at:
   app/modules/Api/models/Store/LegacyLayer/TargetModifierModel.class.php
 
 Example:
+
   $api->set_columns('HOST_NAME', 'HOST_CURRENT_STATE', 'HOST_OUTPUT');
 
 =cut
@@ -166,8 +167,8 @@ sub set_columns {
     my $columncount = 0;
     $self->{'columns'} = [];
     foreach (@columns) {
-        push $self->{'columns'}, 'columns[' . $columncount . ']';
-        push $self->{'columns'}, $_;
+        push @{$self->{'columns'}}, 'columns[' . $columncount . ']';
+        push @{$self->{'columns'}}, $_;
         $columncount++;
     }
 }
@@ -181,6 +182,7 @@ details on how filters need to be defined. Basically, they define it in JSON
 syntax, but this module requires a Perl hash reference instead.
 
 Simple Example:
+
   $api->set_filters( {
       'type'  => 'AND',
       'field' => [
@@ -194,6 +196,7 @@ Simple Example:
   } );
 
 More complex example:
+
   $api->set_filters( {
       'type' => 'AND',
       'field' => [
@@ -247,13 +250,13 @@ sub set_filters {
     }
     else {
         $self->{'filters'} = [];
-        push $self->{'filters'}, 'filters_json';
-        push $self->{'filters'}, $json_data;
+        push @{$self->{'filters'}}, 'filters_json';
+        push @{$self->{'filters'}}, $json_data;
     }
 }
 
 
-=item get_hosts
+=item get_hosts (@states)
 
 Return an array of all host objects matching the specified states. The
 parameters can be:
@@ -279,7 +282,7 @@ sub get_hosts {
 }
 
 
-=item get_services
+=item get_services (@states)
 
 Return an array of all service objects matching the specified states. The
 parameters can be:
@@ -381,7 +384,7 @@ sub _get {
             'value'  => [ $state ],
         };
 
-        push $filters->{'field'}, $subfilter;
+        push @{$filters->{'field'}}, $subfilter;
     }
 
     # Remember the original values to restore them later
